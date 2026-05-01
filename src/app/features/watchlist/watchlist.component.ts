@@ -4,7 +4,7 @@ import {
 import { Router } from '@angular/router';
 import { WatchlistService } from '../../core/services/watchlist.service';
 import { MfApiService } from '../../core/services/mf-api.service';
-import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
+import { FundSummary } from '../../core/models/fund.model';
 
 @Component({
   selector: 'app-watchlist',
@@ -18,9 +18,9 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
 
     @if (watchlist.entries().length === 0) {
       <div class="empty-state">
-        <p class="empty-icon">☆</p>
+        <p class="empty-icon">&#9734;</p>
         <p class="empty-title">Your watchlist is empty</p>
-        <p class="text-muted">Search for funds on the dashboard and tap ☆ to add them here.</p>
+        <p class="text-muted">Search for funds on the dashboard and tap the star to add them here.</p>
         <button class="go-btn" (click)="router.navigate(['/dashboard'])">Go to Dashboard</button>
       </div>
     } @else {
@@ -30,23 +30,21 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
 
           <div class="fund-row card" (click)="goToFund(entry.schemeCode)">
             <div class="row-main">
-              <div>
+              <div class="fund-copy">
                 <p class="fund-name">{{ entry.schemeName }}</p>
-                <p class="text-muted" style="font-size:11px; margin-top:3px;">
-                  Added {{ formatDate(entry.addedAt) }}
-                </p>
+                <p class="meta text-muted">Added {{ formatDate(entry.addedAt) }}</p>
               </div>
 
               @if (summary) {
                 @let isPos = summary.changePercent >= 0;
                 <div class="nav-block">
-                  <p class="nav-val">₹{{ summary.currentNav.toFixed(2) }}</p>
+                  <p class="nav-val">&#8377;{{ summary.currentNav.toFixed(2) }}</p>
                   <span class="chip" [class.chip-success]="isPos" [class.chip-danger]="!isPos">
                     {{ isPos ? '▲' : '▼' }} {{ summary.changePercent }}%
                   </span>
                 </div>
               } @else {
-                <div class="skeleton" style="height:40px; width:90px; border-radius:8px;"></div>
+                <div class="skeleton nav-skeleton"></div>
               }
             </div>
 
@@ -72,7 +70,11 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
     .fund-row {
       cursor: pointer;
       transition: border-color 0.15s, box-shadow 0.15s;
-      &:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+    }
+
+    .fund-row:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
     }
 
     .row-main {
@@ -83,7 +85,23 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
       margin-bottom: 12px;
     }
 
-    .fund-name { font-size: 14px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+    .fund-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .fund-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .meta {
+      font-size: 11px;
+      margin-top: 3px;
+    }
 
     .nav-block {
       display: flex;
@@ -93,7 +111,19 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
       flex-shrink: 0;
     }
 
-    .nav-val { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .nav-val {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .nav-skeleton {
+      height: 40px;
+      width: 90px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
 
     .remove-btn {
       background: none;
@@ -105,15 +135,21 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
       cursor: pointer;
       font-family: inherit;
       transition: all 0.15s;
-      &:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+    }
+
+    .remove-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-light);
     }
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      .empty-icon  { font-size: 48px; margin-bottom: 16px; }
-      .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
     }
+
+    .empty-icon  { font-size: 48px; margin-bottom: 16px; }
+    .empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
 
     .go-btn {
       margin-top: 20px;
@@ -126,16 +162,38 @@ import { FundSummary, WatchlistEntry } from '../../core/models/fund.model';
       font-weight: 500;
       cursor: pointer;
       font-family: inherit;
-      &:hover { opacity: 0.9; }
+    }
+
+    .go-btn:hover { opacity: 0.9; }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 16px;
+      }
+
+      .row-main {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav-block {
+        width: 100%;
+        align-items: flex-start;
+      }
+
+      .remove-btn {
+        width: 100%;
+        padding: 10px 12px;
+      }
     }
   `],
 })
 export class WatchlistComponent implements OnInit {
   readonly watchlist = inject(WatchlistService);
-  readonly router    = inject(Router);
+  readonly router = inject(Router);
   private readonly mfApi = inject(MfApiService);
 
-  // signal map of schemeCode → FundSummary (loaded on init)
+  // signal map of schemeCode to FundSummary (loaded on init)
   readonly summaryMap = signal<Record<number, FundSummary>>({});
 
   ngOnInit(): void {
