@@ -12,4 +12,9 @@ export default defineConfig({
       exclude: ['src/app/**/*.spec.ts', 'src/main.ts'],
     },
   },
+  build: {
+    rollupOptions: {
+      external: ['some-external-package']
+    }
+  }
 });
