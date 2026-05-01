@@ -16,7 +16,7 @@ export const selectFundSummary = createSelector(
   selectSelectedFund,
   (detail) => {
     if (!detail) return null;
-    const svc = new MfApiService(null as any);  // stateless helper — no HTTP needed
+    const svc = new MfApiService(undefined as any);  // stateless helper — no HTTP needed
     return svc.toSummary(detail);
   }
 );
@@ -25,7 +25,7 @@ export const selectNavHistory = (days: number) => createSelector(
   selectSelectedFund,
   (detail) => {
     if (!detail) return null;
-    const svc = new MfApiService(null as any);
+    const svc = new MfApiService(undefined as any);
     return svc.getNavHistory(detail, days);
   }
 );
